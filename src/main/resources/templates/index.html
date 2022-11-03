@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Information</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+            crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="row d-flex justify-content-between">
+        <div class="col-sm-4 align-self-center">
+            <form th:action="@{/}" method="get">
+                <label for="searchName" class="form-label">Search by name</label>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control"  id="searchName" name="search">
+                </div>
+                <button class="btn btn-primary">Search</button>
+            </form>
+        </div>
+        <div class="col-sm-4 align-self-center">
+            <form th:action="@{/logout}">
+                <button class="btn btn-danger">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="row">
+            <div class="col-sm">
+                <h2>Employee</h2>
+                <div class="input-group flex-nowrap mb-3">
+                    <span class="input-group-text">Name</span>
+                    <input type="text" class="form-control" id="inputAddEmpName">
+                </div>
+                <div class="input-group mb-3">
+                    <label class="input-group-text" for="inputAddDeptForEmp">Department</label>
+                    <select class="form-select" id="inputAddDeptForEmp">
+                        <option selected>Choose</option>
+                        <option value="1">One</option>
+                        <option value="2">Two</option>
+                        <option value="3">Three</option>
+                    </select>
+                </div>
+                <div class="input-group flex-nowrap sm">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="inputAddEmpActive"
+                               checked>
+                        <label class="form-check-label" for="inputEditEmpActive">
+                            Active
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm">
+                <h2>Department</h2>
+                <div class="input-group flex-nowrap mb-3">
+                    <span class="input-group-text">Name</span>
+                    <input type="text" class="form-control" id="inputAddDepartment">
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm">
+                <div>
+                    <button class="btn btn-success" onclick="addEmployee()">Add Employee</button>
+                </div>
+            </div>
+            <div class="col-sm">
+                <div>
+                    <button class="btn btn-success" onclick="addDepartment()">Add Department</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <table class="table" th:if="${employees.size() != 0}">
+        <thead>
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Name</th>
+            <th scope="col">isActive</th>
+            <th scope="col">Department</th>
+            <th scope="col"></th>
+            <th scope="col"></th>
+            <th scope="col"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="emp : ${employees}">
+            <th scope="row" th:text="${emp.getId()}"></th>
+            <th th:text="${emp.getName()}"></th>
+            <th th:text="${emp.isActive()}"></th>
+            <th th:text="${emp.getDepartment().getName()}"></th>
+            <th>
+                <button class="btn btn-success"
+                        th:onclick="|viewAllInfo(${emp.getId()})|"
+                        data-bs-toggle="modal"
+                        data-bs-target="#viewModal">View
+                </button>
+            </th>
+            <th>
+                <button class="btn btn-warning"
+                        th:onclick="|editInfo(${emp.getId()})|"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editModal">Edit
+                </button>
+            </th>
+            <th>
+                <button class="btn btn-danger"
+                        th:onclick="|deleteEmployee(${emp.getId()})|">Delete
+                </button>
+            </th>
+        </tr>
+        </tbody>
+    </table>
+
+    <nav aria-label="Page navigation example" th:if="${employees.size() != 0}">
+        <ul class="pagination justify-content-center">
+            <li class="page-item"
+                th:classappend="${currentNumberPage <= 1} ? 'disabled' : ''">
+                <a class="page-link"
+                   th:href="@{/?page={prevPage}(prevPage = ${currentNumberPage > 1 ? currentNumberPage - 1 : 0})} + ${searchedName != null ? '&search=' + searchedName : ''}">Previous</a>
+            </li>
+            <li class="page-item" th:classappend="${i == currentNumberPage} ? 'active' : ''"
+                th:each="i: ${#numbers.sequence(1, amountPages)}">
+                <a class="page-link" th:href="@{/?page={numPage}(numPage = ${i})} + ${searchedName != null ? '&search=' + searchedName : ''}" th:text="${i}"></a>
+            </li>
+            <li class="page-item"
+                th:classappend="${currentNumberPage == amountPages} ? 'disabled' : ''">
+                <a class="page-link"
+                   th:href="@{/?page={nextPage}(nextPage = ${currentNumberPage != amountPages ? currentNumberPage + 1 : currentNumberPage})} + ${searchedName != null ? '&search=' + searchedName : ''}">Next</a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="modal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true" id="viewModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewModalTitle">Modal title</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="viewModalBody">
+                    <p>Modal body text goes here.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true" id="editModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalTitle">Modal title</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="editModalBody">
+                    <div class="row">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">EmpName</span>
+                            <input type="text" class="form-control" id="inputEditEmpName">
+                        </div>
+                        <div class="form-floating">
+                            <select class="form-select" id="inputEditDepartmentEmployee">
+
+                            </select>
+                            <label for="inputEditDepartmentEmployee">Department</label>
+                        </div>
+                        <div class="input-group mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="" id="inputEditEmpActive"
+                                       checked>
+                                <label class="form-check-label" for="inputEditEmpActive">
+                                    Active
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="updateEmployee()">Save changes</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true" id="errorModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="errorModalTitle">Errors</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="errorModalBody">
+                    <p>Modal body text goes here.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+<script>
+    async function viewAllInfo(idEmp) {
+        await fetch('/emp/' + idEmp, {
+            method: 'GET',
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }).then(resp => resp.json())
+            .then(obj => {
+                $('#viewModalTitle').text(`Dept: ${obj.department.deptName} - EmpName: ${obj.empName}`);
+                $('#viewModalBody').empty();
+                $('#viewModalBody').append(`<p class="fw-bold">Departament: ${obj.department.deptName}</p>`);
+                $('#viewModalBody').append(`<p class="fw-bold">Employee name: ${obj.empName}</p>`);
+                $('#viewModalBody').append(`<p class="fw-bold">ID: ${obj.empID}</p>`);
+                $('#viewModalBody').append(`<p class="fw-bold">Coworkers:</p>`);
+                for (const emp of obj.department.employees) {
+                    $('#viewModalBody').append(`<p>Employee name: ${emp}</p>`);
+                }
+            });
+    }
+
+
+    let saveEmp;
+
+    async function editInfo(idEmp) {
+        idEmpSaver = idEmp;
+        //DEPT NAMES
+        await fetch('/dept/names', {
+            method: 'GET',
+            headers: {
+                "Content-Type": "application/json",
+            }
+        }).then(resp => resp.json())
+            .then(names => {
+                $('#inputEditDepartmentEmployee').empty();
+                for (const name in names) {
+                    $('#inputEditDepartmentEmployee').append(`<option value="${names[name]}">${name}</option>`);
+                }
+            });
+
+        //EMP INFO SHOW
+        await fetch('/emp/' + idEmp, {
+            method: 'GET',
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }).then(resp => resp.json())
+            .then(emp => {
+                saveEmp = emp;
+                $('#inputEditDepartmentEmployee').val(emp.department.deptID);
+                $('#inputEditEmpName').val(emp.empName);
+                $('#inputEditEmpActive').prop('checked', emp.empActive);
+            });
+
+
+    }
+
+    // UPDATE USER
+    async function updateEmployee() {
+        saveEmp.department.deptName = $('#inputEditDepartmentEmployee option:selected').text();
+        saveEmp.department.deptID = $('#inputEditDepartmentEmployee').val();
+        saveEmp.empName = $('#inputEditEmpName').val();
+        saveEmp.empActive = $('#inputEditEmpActive').prop('checked');
+
+        await fetch('/emp', {
+            method: 'PUT',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(saveEmp)
+        }).then(res => {
+            if (res.status === 200) {
+                window.location.reload();
+            }
+            return res.json();
+        }).then(errors => {
+            $('#errorModalBody').empty();
+            for (const error in errors) {
+                $('#errorModalBody').append(`<p>${errors[error]}</p>`);
+            }
+
+            $('#errorModal').modal('show');
+        });
+    }
+
+    async function deleteEmployee(idEmp) {
+        let deleteEmp;
+
+        await fetch('/emp/' + idEmp, {
+            method: 'GET',
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }).then(resp => resp.json())
+            .then(emp => {
+                deleteEmp = Object.assign({}, emp);
+            });
+
+        await fetch('/emp', {
+            method: 'DELETE',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(deleteEmp)
+        });
+        window.location.reload();
+    }
+
+    document.getElementById('inputAddDeptForEmp').addEventListener('focus', async ev => {
+        await fetch('/dept/names', {
+            method: 'GET',
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }).then(resp => resp.json())
+            .then(names => {
+                $('#inputAddDeptForEmp').empty();
+                for (const name in names) {
+                    $('#inputAddDeptForEmp').append(`<option value="${names[name]}">${name}</option>`);
+                }
+            });
+    });
+
+    async function addEmployee() {
+        let emp = {
+            empID: null,
+            empName: null,
+            isActive: null,
+            department: {
+                deptName: null,
+                deptID: null,
+                employees: []
+            }
+        }
+
+        emp.empName = 0;
+        emp.empName = $('#inputAddEmpName').val();
+        emp.empActive = $('#inputAddEmpActive').prop('checked');
+        emp.department.deptID = $('#inputAddDeptForEmp').val();
+        emp.department.deptName = $('#inputAddDeptForEmp option:selected').text();
+        if ($('#inputAddDeptForEmp option:selected').text() === 'Choose') {
+            emp.department = null;
+        }
+
+        await fetch('/emp', {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(emp)
+        }).then(res => {
+            if (res.status === 200) {
+                window.location.reload();
+            }
+            return res.json();
+        }).then(errors => {
+            $('#errorModalBody').empty();
+            for (const error in errors) {
+                $('#errorModalBody').append(`<p>${errors[error]}</p>`);
+            }
+
+            $('#errorModal').modal('show');
+        });
+    }
+
+    async function addDepartment() {
+        let department = {
+            deptName: null,
+            deptID: null,
+            employees: []
+        }
+
+        department.deptID = 0;
+        department.deptName = $('#inputAddDepartment').val();
+
+        await fetch('/dept', {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(department)
+        }).then(res => {
+            if (res.status === 200) {
+                window.location.reload();
+            }
+            return res.json();
+        }).then(errors => {
+            $('#errorModalBody').empty();
+            for (const error in errors) {
+                $('#errorModalBody').append(`<p>${errors[error]}</p>`);
+            }
+
+            $('#errorModal').modal('show');
+        });
+    }
+</script>
+</html>
